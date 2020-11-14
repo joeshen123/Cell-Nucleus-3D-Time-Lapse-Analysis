@@ -221,11 +221,23 @@ all_labels = Labelled_table.particle.unique()
 for label in all_labels:
    Labelled_table['normalized intensity ratio'][Labelled_table.particle ==label] = Labelled_table['normalized intensity ratio'][Labelled_table.particle ==label]/Labelled_table['median intensity ratio'][Labelled_table.particle ==label][0]
 
- 
+#Add Tracks Data
+#Add tracks
+
+Labelled_table.rename(columns = {'frame':'time'}, inplace = True)
+Labelled_table.particle += 1
+
+table_tracks = Labelled_table[['particle','time','z','y','x']]
+
+table_tracks_sorted=table_tracks.sort_values(by=['particle','time'])
+
+tracks_array = table_tracks_sorted.to_numpy()
+
 #Visualizations
 with napari.gui_qt():
  viewer = napari.Viewer()
  viewer.add_image(image, scale = [1,7,1,1])
+ viewer.add_tracks(tracks_array,name="Nucleus Tracks",scale=[1,7,1,1])
  viewer.add_image(Segment_tracker.mid_slice_stack,name='Mid Plane', scale = [1,7,1,1])
  viewer.add_image(track.watershed_map_list,name='Distance Map', scale = [1,7,1,1])
  viewer.add_image(track.segmented_object_image>0 ,name='Segmented Object', scale = [1,7,1,1])
@@ -290,6 +302,7 @@ with h5py.File(seg_save_name, "w") as f:
       f.create_dataset('Mid_Plane_Selection', data = Segment_tracker.mid_slice_stack, compression = 'gzip')
       f.create_dataset('Distance Map', data = track.watershed_map_list, compression = 'gzip')
       f.create_dataset('Seed Map', data = track.seed_map_list, compression = 'gzip')
+      f.create_dataset('Tracks', data = tracks_array, compression = 'gzip')
 
 
     
